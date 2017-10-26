@@ -26,10 +26,10 @@
 </div>    
 
 <!-- The body area -->
-<div class="container"><?php include($page_content);?></div> 
+<div class="container content"><?php include($page_content);?></div> 
 
 <!-- Footer -->
-<div style="position: fixed; bottom: 0px; right:0px;">
+<div align = "center">
 &copy;2017 Quality Hats
 </div>
 
