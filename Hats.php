@@ -1,4 +1,8 @@
-<form method="post" enctype="multipart/form-data" action="index.php?content_page=CreateHat">
+<?php
+require("CheckLogin.php");
+?>
+
+<form method="post" enctype="multipart/form-data" action="index.php?content_page=HatCreate">
 <input type="Submit" value="Create New" class="btn btn-success"/>
 </form>
 <br>
@@ -8,6 +12,45 @@ $mysqli = new mysqli("localhost", "lia15", "06121987", "lia15mysql3");
 if ($mysqli->connect_errno)
 {
     echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+}
+
+if (isset($_GET['action']) && $_GET['action']=='create')
+{
+	if (isset($_FILES["hat_image"]) && ($_FILES["hat_image"]["error"] > 0))
+	{
+		echo "Error: " . $_FILES["hat_ image"]["error"] . "<br />";
+	}
+	elseif (isset($_FILES["hat_image"]))
+	{
+		move_uploaded_file($_FILES["hat_image"]["tmp_name"], "../PHPAssignment/images/hats/" . $_FILES["hat_image"]["name"]); //Save the image as the supplied name
+	}
+	
+	$hat_name = $_POST['hat_name'];	
+	$hat_description = $_POST['hat_description'];
+	$hat_price = $_POST['hat_price'];
+	$hat_image = $_FILES["hat_image"]["name"];
+	$hat_categoryId = $_POST['hat_categoryId'];
+	$hat_supplierId = $_POST['hat_supplierId'];
+	
+	if(!($stmt = $mysqli->prepare("INSERT INTO hat (HatName,Description,UnitPrice,ImagePath,CategoryId,SupplierId) VALUES (?,?,?,?,?,?)")))
+	{
+		echo "Prepare failed: (" . $mysqli->errno . ") " . $mysqli->error;
+	}
+
+    // TODO check that $stmt creation succeeded
+
+    // "s" means the database expects a string
+    if(!$stmt->bind_param("ssssss", $hat_name, $hat_description, $hat_price, $hat_image, $hat_categoryId, $hat_supplierId))
+	{
+		echo "Binding parameters failed: (" . $stmt->errno . ") " . $stmt->error;
+	}
+
+    if(!$stmt->execute())
+	{
+		echo "Execute failed: (" . $stmt->errno . ") " . $stmt->error;
+	}
+
+    $stmt->close();
 }
 
 //Select hats information
@@ -27,7 +70,7 @@ if (!$rs)
 }
 ?>
 
-<table class="table"> <!-- File information table starts -->
+<table class="table"> <!-- Hat information table starts -->
 	<tr>
    		<th></th>
     	<th>Name</th>
@@ -37,7 +80,7 @@ if (!$rs)
     </tr>
 
 <?php  
-//Display the file information in a table
+//Display hat information in a table
 while ($row = $rs->fetch_assoc())
 {
 	$hat_id=$row["hat_id"];
@@ -59,9 +102,9 @@ while ($row = $rs->fetch_assoc())
 	echo "<td>$hat_name</td>";
 	echo "<td>$hat_categoryId</td>";
 	echo "<td>$hat_price</td>";
-	echo "<td></td>";
+	echo "<td><a href='index.php?content_page=php-shopping/cart&action=add&id=".$hat_id."'>Add to cart</a></li></td>";
 	echo "</tr>";
 }
 ?>
-</table> <!-- File information table ends -->
+</table> <!-- Hat information table ends -->
 

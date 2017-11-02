@@ -3,7 +3,7 @@
 
 <h2 class="title">Create A New Hat</h2>
 
-<form method="post" enctype="multipart/form-data" action="index.php?content_page=ReviewerComments">
+<form method="post" enctype="multipart/form-data" action="index.php?content_page=Hats&action=create">
     <div class="form-horizontal">
         <h4 class="title">Please enter details</h4>
         <hr />
