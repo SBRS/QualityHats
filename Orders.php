@@ -55,7 +55,7 @@ while ($row = $rs->fetch_assoc())
 {
 	echo "<tr>";
 	echo "<td>".$row['OrderId']."</td>";
-	echo "<td>".$row['Email']."</td>";
+	echo "<td>".$row['FirstName']." ".$row['LastName']."</td>";
 	echo "<td>".$row['Subtotal']."</td>";
 	echo "<td>".$row['GST']."</td>";
 	echo "<td>".$row['GrandTotal']."</td>";

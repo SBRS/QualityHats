@@ -1,12 +1,11 @@
 <?php
-require("CheckLogin.php");
-?>
+require("ErrorFunctions.php");
+//Sets a user function (error_handler) to handle errors in a script
+$error_handler = set_error_handler("userErrorHandler");
 
-<form method="post" enctype="multipart/form-data" action="index.php?content_page=HatCreate">
-<input type="Submit" value="Create New" class="btn btn-success"/>
-</form>
-<br>
-<?php
+session_start();
+$_SESSION['request_page'] = "Hats";
+$user = $_SESSION['current_user'];
 // create connection
 $mysqli = new mysqli("localhost", "lia15", "06121987", "lia15mysql3");
 if ($mysqli->connect_errno)
@@ -18,7 +17,8 @@ if (isset($_GET['action']) && $_GET['action']=='create')
 {
 	if (isset($_FILES["hat_image"]) && ($_FILES["hat_image"]["error"] > 0))
 	{
-		echo "Error: " . $_FILES["hat_ image"]["error"] . "<br />";
+		echo '<div class="text-warning"><h3>Warning: No image found while creating a hat</h3></div>';
+		trigger_error("No file supplied", E_USER_ERROR);
 	}
 	elseif (isset($_FILES["hat_image"]))
 	{
@@ -29,8 +29,8 @@ if (isset($_GET['action']) && $_GET['action']=='create')
 	$hat_description = $_POST['hat_description'];
 	$hat_price = $_POST['hat_price'];
 	$hat_image = $_FILES["hat_image"]["name"];
-	$hat_categoryId = $_POST['hat_categoryId'];
-	$hat_supplierId = $_POST['hat_supplierId'];
+	$hat_categoryId = $_POST['category_option'];
+	$hat_supplierId = $_POST['supplier_option'];
 	
 	if(!($stmt = $mysqli->prepare("INSERT INTO hat (HatName,Description,UnitPrice,ImagePath,CategoryId,SupplierId) VALUES (?,?,?,?,?,?)")))
 	{
@@ -53,43 +53,107 @@ if (isset($_GET['action']) && $_GET['action']=='create')
     $stmt->close();
 }
 
-//Select hats information
-$sql="SELECT hat.HatId As hat_id,
-             hat.HatName As hat_name,
-             hat.Description As hat_description,
-			 hat.UnitPrice As hat_price,
-			 hat.ImagePath As hat_image,
-			 hat.CategoryId As hat_categoryId,
-			 hat.SupplierId As hat_supplierId
-      FROM hat";
-	  
+if ($user == "admin@qualityhats.co.nz")
+{
+	echo "<form method='post' enctype='multipart/form-data' action='index.php?content_page=HatCreate'>
+		      <input type='Submit' value='Create New' class='btn btn-success'/>
+		  </form>
+		  <br>";
+}
+
+echo "Category:";
+
+$sql="SELECT * FROM category";	  
 $rs=$mysqli->query($sql);
 if (!$rs)
 {
 	exit("Error in SQL");
 }
+
+while ($row = $rs->fetch_assoc())
+{
+	echo '<a class="btn btn-danger" href="index.php?content_page=Hats&categoryId='.$row["CategoryId"].'">'.$row["CategoryName"].'</a>';
+}
+
+if (isset($_GET['categoryId']))
+{
+	$sql="SELECT * FROM hat, supplier, category 
+		WHERE hat.CategoryId = ".$_GET['categoryId']." AND supplier.SupplierId=hat.SupplierId AND category.CategoryId=hat.CategoryId";
+	echo '<h3 class="title"></h3>';
+}
+else
+{
+	$sql="SELECT * FROM hat, supplier, category 
+		WHERE supplier.SupplierId=hat.SupplierId AND category.CategoryId=hat.CategoryId";
+	echo '<h3 class="title">All Hats</h3>';
+}	  
+$rs=$mysqli->query($sql);
+if (!$rs)
+{
+	exit("Error in SQL");
+}
+//Count the record number
+$counter = $rs->num_rows;
+
+$PageSize=5;
+$PageCount=$counter/$PageSize + 1;
+
+//Output page index table
+echo "<table>";
+echo "<tr>";
+for( $i=1; $i <= $PageCount; $i++)
+{
+	if (isset($_GET['categoryId']))
+	{
+		echo "<td><a href=index.php?content_page=Hats&pg=$i&categoryId=".$_GET['categoryId']."><button class='btn btn-info'>Page $i</button></a></td>";
+	}
+	else
+	{
+		echo "<td><a href=index.php?content_page=Hats&pg=$i><button class='btn btn-info'>Page $i</button></a></td>";
+	}
+} //end for
+echo "</tr></table><br>";
 ?>
 
-<table class="table"> <!-- Hat information table starts -->
+<table class="table">
 	<tr>
    		<th></th>
     	<th>Name</th>
     	<th>Category</th>
+    	<th>Description</th>
+    	<th>Supplier</th>
     	<th>Price</th>
-    	<th></th>
+    	<?php if ($user != "admin@qualityhats.co.nz"){ echo "<th></th>";} ?>
     </tr>
 
 <?php  
-//Display hat information in a table
-while ($row = $rs->fetch_assoc())
+// Test if this is the first page 
+if (isset($_GET['pg']))
 {
-	$hat_id=$row["hat_id"];
-	$hat_name=$row["hat_name"];
-	$hat_description=$row["hat_description"];
-	$hat_price=$row["hat_price"];
-	$hat_image=$row["hat_image"];
-	$hat_categoryId=$row["hat_categoryId"];
-	$hat_supplierId=$row["hat_supplierId"];
+  // set the parameters for the rest pages 
+  $start= ($_GET['pg']-1)*$PageSize + 1;
+  $end= $_GET['pg']*$PageSize;
+  if( $end > $counter )
+	$end = $counter;
+}
+else
+{
+  //set the parameters for the first page
+  $start= 1;
+  $end= $PageSize;
+  if( $end > $counter )
+	$end = $counter;
+}//end if IsSet("$_GET['pg']")
+
+$j = $start - 1;
+/* seek to row no. $j */
+$rs->data_seek($j);
+
+//Display the page 
+for( $i=$start; $i <= $end; $i++)
+{
+	$row = $rs->fetch_assoc();
+	$hat_image=$row['ImagePath'];
 	$img_name = $hat_image;
 	if (!$hat_image) 
 	{
@@ -97,14 +161,37 @@ while ($row = $rs->fetch_assoc())
 	}
 
 	echo "<tr>";
-	echo "<td><img style='width: 250px; height: auto;' src='images/hats/" . $img_name . "' alt='Hat Image'
+	echo "<td><img style='width: 250px; height: auto;' src='images/hats/".$img_name."' alt='Hat Image'
 		onerror='this.onerror=null; this.src = \"images/hats/Error.jpg\"'></td>";
-	echo "<td>$hat_name</td>";
-	echo "<td>$hat_categoryId</td>";
-	echo "<td>$hat_price</td>";
-	echo "<td><a href='index.php?content_page=php-shopping/cart&action=add&id=".$hat_id."'>Add to cart</a></li></td>";
+	echo "<td>".$row['HatName']."</td>";
+	echo "<td>".$row['CategoryName']."</td>";
+	echo "<td>".$row['Description']."</td>";
+	echo "<td>".$row['SupplierName']."</td>";
+	echo "<td>".$row['UnitPrice']."</td>";
+	if ($user != "admin@qualityhats.co.nz")
+	{
+		echo "<td><a href='index.php?content_page=Hats&action=add&id=".$row['HatId']."'><button class='btn btn-warning'>Add to cart</button></a></li></td>";
+	}
 	echo "</tr>";
 }
-?>
-</table> <!-- Hat information table ends -->
+echo "</table>";
+	
+echo "<table>";
+echo "<tr>";
+for( $i=1; $i <= $PageCount; $i++)
+{
+	if (isset($_GET['categoryId']))
+	{
+		echo "<td><a href=index.php?content_page=Hats&pg=$i&categoryId=".$_GET['categoryId']."><button class='btn btn-info'>Page $i</button></a></td>";
+	}
+	else
+	{
+		echo "<td><a href=index.php?content_page=Hats&pg=$i><button class='btn btn-info'>Page $i</button></a></td>";
+	}
+} //end for
+echo "</tr></table><br>";
 
+$rs->free();    
+//close connection 
+$mysqli->close(); 
+?>

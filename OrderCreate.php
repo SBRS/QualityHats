@@ -1,4 +1,5 @@
 <?php
+require("CheckLogin.php");
 session_start(); //starting session
 $user = $_SESSION['current_user'];
 
@@ -50,6 +51,33 @@ $cart = $_SESSION['cart'];
 $items = explode(',',$cart);
 $contents = array();
 
+echo '<h2 class="title"><span class="glyphicon glyphicon-saved"></span>Thank you For Your Purchase!</h2>
+
+<div>
+    <h4 class="title">The following order will be dispatched as per the details below.</h4>
+    <hr />
+    <dl class="dl-horizontal">
+        <dt>Order Id</dt>
+        <dd>'.$orderId.'</dd>
+        <dt>Customer Name</dt>
+        <dd>'.$userName.'</dd>
+        <dt>Email</dt>
+        <dd>'.$user.'</dd>
+        <dt>Address</dt>
+        <dd>'.$userAddress.'</dd>
+        <dt>Status</dt>
+        <dd>'.$status.'</dd>
+        <dt>Order Date</dt>
+        <dd>'.$date.'</dd>
+		<dd>
+            <table class="table">
+                <tr>
+                    <th>Hat</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                </tr>';
+
 foreach ($items as $item)
 {
 	$contents[$item] = (isset($contents[$item])) ? $contents[$item] + 1 : 1;
@@ -78,111 +106,35 @@ foreach ($contents as $id=>$qty)
 	}
 
 	$stmt->close();
-
+	
+echo '<tr>
+		<td>'.$HatName.'</td>
+		<td>'.$Description.'</td>
+		<td>'.$qty.'</td>
+		<td>'.$UnitPrice.'</td>
+	  </tr>';
 }
+echo '<tr>
+		<td></td>
+		<td></td>
+		<td><label>Subtotal:</label></td>
+		<td>'.$subtotal.'</td>
+	  </tr>
+	  <tr>
+	  <td></td>
+	  <td></td>
+	  <td><label>GST:</label></td>
+	  <td>'.$gst.'</td>
+	  </tr>
+	  <tr>
+	  	<td></td>
+		<td></td>
+		<td><label>Grand Total:</label></td>
+		<td>'.$grandTotal.'</td>
+	  </tr>';
+echo '</table>';
+echo '</dd>';
+echo '</dl>';
+echo '</div>';
+$_SESSION['cart'] = '';
 ?>
-
-<h2 class="title"><span class="glyphicon glyphicon-saved"></span>Thank you For Your Purchase!</h2>
-
-<div>
-    <h4 class="title">The following order will be dispatched as per the details below.</h4>
-    <hr />
-    <dl class="dl-horizontal">
-        <dt>
-            Order Id
-        </dt>
-        <dd>
-            <?php echo $orderId ?>
-        </dd>
-        <dt>
-            Customer Name
-        </dt>
-        <dd>
-            <?php echo $userName ?>
-        </dd>
-        <dt>
-            Email
-        </dt>
-        <dd>
-            <?php echo $user ?>
-        </dd>
-        <dt>
-            Address
-        </dt>
-        <dd>
-            <?php echo $userAddress ?>
-        </dd>
-        <dt>
-            Status
-        </dt>
-        <dd>
-            <?php echo $status ?>
-        </dd>
-        <dt>
-            Order Date
-        </dt>
-        <dd>
-            <?php echo $date ?>
-        </dd>
-<!--
-        <dd>
-            <table class="table">
-                <tr>
-                    <th>Hat</th>
-                    <th>Description</th>
-                    <th>Quantity</th>
-                    <th>Price</th>
-                </tr>
-                @foreach (var item in Model.OrderDetails)
-                {
-                    <tr>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Hat.HatName)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Hat.Description)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Quantity)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Hat.UnitPrice)
-                        </td>
-                    </tr>
-                }
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <label>Subtotal:</label>
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => Model.Subtotal)
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <label>GST:</label>
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => Model.GST)
-                    </td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <label>Grand Total:</label>
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => Model.GrandTotal)
-                    </td>
-                </tr>
-            </table>
-        </dd>
--->
-
-    </dl>
-</div>

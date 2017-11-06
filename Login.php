@@ -13,19 +13,26 @@
 			// call the pre-defined function and check if user is authenticated
 			if (checkUserCredentals($_POST['form_username'], $_POST['form_password']))
 			{
-			//The login is successful, set the login flag to true and save the current user name
-		    $_SESSION['flag'] = true;
-			$_SESSION['current_user'] = $_POST['form_username'];
-					
-			//redirect the user to the correct page
-			//find out where to go after login
-			if (isset($_SESSION['request_page']))
-		    $redirect_page = "http://dochyper.unitec.ac.nz/lia15/PHPAssignment/index.php?content_page=".$_SESSION['request_page'];
-			else
-			$redirect_page = "http://dochyper.unitec.ac.nz/lia15/PHPAssignment/index.php";
-				
-            //redirect the user to the correct page after login
-			header("Location: ".$redirect_page);
+				if ($_SESSION['enabled'] == '1')
+				{
+					//The login is successful, set the login flag to true and save the current user name
+					$_SESSION['flag'] = true;
+					$_SESSION['current_user'] = $_POST['form_username'];
+
+					//redirect the user to the correct page
+					//find out where to go after login
+					if (isset($_SESSION['request_page']))
+					$redirect_page = "http://dochyper.unitec.ac.nz/lia15/PHPAssignment/index.php?content_page=".$_SESSION['request_page'];
+					else
+					$redirect_page = "http://dochyper.unitec.ac.nz/lia15/PHPAssignment/index.php";
+
+					//redirect the user to the correct page after login
+					header("Location: ".$redirect_page);
+				}
+				else
+				{
+					$info = 'Your Account is currently Disabled, please consult the Administrator.';
+				}
 			}
 	} //Otherwise, stay in the login page
 	
@@ -37,11 +44,11 @@
             <form method="post" class="form-horizontal">
                 <h4 class="title">Use a local account to log in</h4>
                 <hr />
-                <div class="text-danger"></div>
+                <div class="text-danger"><p><?php echo $info; ?></p></div>
                 <div class="form-group">
                     <label class="col-md-2 control-label">Email</label>
                     <div class="col-md-4">
-                        <input class="form-control" type="text" name="form_username"/>
+                        <input class="form-control" type="text" name="form_username" value="<?php if(isset($_POST['form_username'])) echo $_POST['form_username']; ?>"/>
                         <span class="text-danger"></span>
                     </div>
                 </div>
@@ -58,7 +65,7 @@
                     </div>
                 </div>
                 <p>
-                    <a>Register as a new user?</a>
+                    <a runat="server" href="index.php?content_page=Register">Register as a new user?</a>
                 </p>
             </form>
         </section>

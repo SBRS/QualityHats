@@ -7,7 +7,7 @@
 // Include database connection
 require_once('credential.inc.php');
 
-$db = new MySQL($host,$user,$pass,$name);
+$db = new MySQL($host,$userDb,$pass,$name);
 
 class MySQL {
     /**
